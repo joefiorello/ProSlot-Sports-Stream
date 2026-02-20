@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Radio, Plus, Users, Clock, ChevronRight, Video, Tv } from 'lucide-react';
-import { getGames, createGame, ORG_ID } from '@/lib/db';
+import { Radio, Plus, Users, Clock, ChevronRight, Video, Tv, Trash2, LogOut } from 'lucide-react';
+import { getGames, createGame, deleteGame, ORG_ID } from '@/lib/db';
+import { useAuth } from '@/lib/auth-context';
+import AdminGuard from '@/lib/AdminGuard';
 import type { Game } from '@/types';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -21,6 +23,15 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+    return (
+        <AdminGuard>
+            <DashboardContent />
+        </AdminGuard>
+    );
+}
+
+function DashboardContent() {
+    const { user, signOut } = useAuth();
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
@@ -48,7 +59,7 @@ export default function DashboardPage() {
             await createGame({
                 ...form,
                 orgId: ORG_ID,
-                userId: 'admin', // replace with real auth user
+                userId: user?.email || 'admin',
             });
             const updated = await getGames(ORG_ID);
             setGames(updated);
@@ -58,6 +69,38 @@ export default function DashboardPage() {
             console.error('[createGame]', err);
             setCreateError(err instanceof Error ? err.message : 'Failed to create game. Check your Firebase config.');
         } finally {
+            setCreating(false);
+        }
+    };
+
+    const handleDelete = async (gameId: string) => {
+        if (!confirm('Are you sure you want to delete this game?')) return;
+        try {
+            await deleteGame(ORG_ID, gameId);
+            setGames(prev => prev.filter(g => g.id !== gameId));
+        } catch (err) {
+            console.error('[deleteGame]', err);
+            alert('Failed to delete game.');
+        }
+    };
+
+    const handleQuickStream = async () => {
+        setCreating(true);
+        try {
+            const gameId = await createGame({
+                title: 'Quick Stream',
+                homeTeam: 'Home',
+                awayTeam: 'Away',
+                sport: 'Other',
+                scheduledAt: new Date().toISOString().slice(0, 16),
+                orgId: ORG_ID,
+                userId: user?.email || 'admin',
+            });
+            // Immediately navigate to broadcast page instead of just updating list
+            window.location.href = `/broadcast?gameId=${gameId}`;
+        } catch (err) {
+            console.error('[quickStream]', err);
+            alert('Failed to start quick stream.');
             setCreating(false);
         }
     };
@@ -72,12 +115,29 @@ export default function DashboardPage() {
                     </div>
                     <span className="font-black text-white text-sm">ProSlot <span className="text-cyan-400">Stream</span></span>
                 </Link>
-                <button
-                    onClick={() => setShowCreate(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black text-sm font-black rounded-lg transition-all"
-                >
-                    <Plus className="w-4 h-4" /> New Game
-                </button>
+                <div className="flex gap-2 items-center">
+                    <span className="hidden sm:inline text-xs text-white/30 font-medium">{user?.email}</span>
+                    <button
+                        onClick={handleQuickStream}
+                        disabled={creating}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-400 text-white text-sm font-black rounded-lg transition-all disabled:opacity-50"
+                    >
+                        <Radio className="w-4 h-4" /> Quick Stream
+                    </button>
+                    <button
+                        onClick={() => setShowCreate(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black text-sm font-black rounded-lg transition-all"
+                    >
+                        <Plus className="w-4 h-4" /> New Game
+                    </button>
+                    <button
+                        onClick={signOut}
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                        title="Sign out"
+                    >
+                        <LogOut className="w-4 h-4 text-white/40" />
+                    </button>
+                </div>
             </nav>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -135,31 +195,52 @@ export default function DashboardPage() {
                                         </div>
                                         <div>
                                             <div className="font-bold text-white text-sm">{game.homeTeam} vs {game.awayTeam}</div>
-                                            <div className="text-xs text-white/40 mt-0.5">{game.title} · {game.sport}</div>
+                                            <div className="text-xs text-white/40 mt-0.5">{game.title}</div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        {game.status === 'live' && (
-                                            <span className="text-white/40 text-xs flex items-center gap-1">
-                                                <Users className="w-3 h-3" /> {game.viewerCount ?? 0}
+                                    <div className="flex items-center gap-6">
+                                        <div className="hidden sm:block">
+                                            <div className="text-[10px] text-white/30 uppercase tracking-widest font-black mb-0.5">Stream Code</div>
+                                            <div className="font-mono font-bold text-cyan-400 tracking-wider bg-cyan-950/30 px-2.5 py-1 rounded-md border border-cyan-800/30">
+                                                {game.streamCode || '------'}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {game.status === 'live' && (
+                                                <span className="text-white/40 text-xs flex items-center gap-1">
+                                                    <Users className="w-3 h-3" /> {game.viewerCount ?? 0}
+                                                </span>
+                                            )}
+                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${STATUS_COLORS[game.status]}`}>
+                                                {STATUS_LABELS[game.status]}
                                             </span>
-                                        )}
-                                        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${STATUS_COLORS[game.status]}`}>
-                                            {STATUS_LABELS[game.status]}
-                                        </span>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Link
-                                                href={`/broadcast?gameId=${game.id}`}
-                                                className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs font-bold rounded-lg transition-colors"
-                                            >
-                                                Camera
-                                            </Link>
-                                            <Link
-                                                href={`/watch?gameId=${game.id}`}
-                                                className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-                                            >
-                                                <ChevronRight className="w-4 h-4 text-white/50" />
-                                            </Link>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Link
+                                                    href={`/broadcast?gameId=${game.id}`}
+                                                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs font-bold rounded-lg transition-colors"
+                                                >
+                                                    Camera
+                                                </Link>
+                                                <Link
+                                                    href={`/score?gameId=${game.id}`}
+                                                    className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 text-xs font-bold rounded-lg transition-colors"
+                                                >
+                                                    Score
+                                                </Link>
+                                                <Link
+                                                    href={`/watch?gameId=${game.id}`}
+                                                    className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                                >
+                                                    <ChevronRight className="w-4 h-4 text-white/50" />
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(game.id)}
+                                                    className="p-1.5 bg-white/5 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                    title="Delete game"
+                                                >
+                                                    <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -257,7 +338,8 @@ export default function DashboardPage() {
                         </form>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

@@ -1,5 +1,42 @@
 // ─── Stream / Game Types ─────────────────────────────────────────────────────
 
+// ─── Roster ───────────────────────────────────────────────────────────────────
+
+export interface Player {
+    id: string;         // uuid generated client-side
+    name: string;
+    number: string;     // jersey number (string to allow "00")
+    position?: string;  // e.g. "P", "C", "1B"
+    order: number;      // batting order index (0-based)
+}
+
+// ─── Play-by-Play ─────────────────────────────────────────────────────────────
+
+export type PitchType = 'Fastball' | 'Curveball' | 'Changeup' | 'Slider' | 'Other';
+
+export type PlayResult =
+    | 'Ball' | 'Strike' | 'Foul'
+    | 'Single' | 'Double' | 'Triple' | 'Home Run'
+    | 'Out' | 'Strikeout'
+    | 'Walk'
+    | 'Run Scored'
+    | string; // catch-all for custom descriptions
+
+export interface PlayEvent {
+    id?: string;        // Firestore doc id (set after creation)
+    inning: number;
+    isTopInning: boolean;
+    pitchType?: PitchType;
+    result: PlayResult;
+    batterName?: string;
+    pitcherName?: string;
+    onFirst: boolean;
+    onSecond: boolean;
+    onThird: boolean;
+    prevGameState?: Record<string, unknown>; // full game state snapshot before this play
+    timestamp: unknown; // serverTimestamp()
+}
+
 export type StreamStatus = 'scheduled' | 'live' | 'ended' | 'archived';
 
 export interface Game {
@@ -8,9 +45,9 @@ export interface Game {
     title: string;
     homeTeam: string;
     awayTeam: string;
-    sport: string;
     scheduledAt: string; // ISO
     status: StreamStatus;
+    streamCode: string; // 6-character join code
     viewerCount?: number;
     roomName: string; // LiveKit room name
     hlsUrl?: string; // Playback HLS URL

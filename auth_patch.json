@@ -1,0 +1,22 @@
+{
+  "authorizedDomains": [
+    "eccbaseballny.com",
+    "eccbaseballny.web.app",
+    "griffsmethod.com",
+    "griffsmethod.firebaseapp.com",
+    "griffsmethod.web.app",
+    "hometeam-sports.web.app",
+    "localhost",
+    "proslot-api-fl66xccwia-uc.a.run.app",
+    "proslot-locker.firebaseapp.com",
+    "proslot-locker.web.app",
+    "proslot-sports-stream.firebaseapp.com",
+    "proslot-sports-stream.web.app",
+    "proslot.firebaseapp.com",
+    "proslot.web.app",
+    "proslotbos.com",
+    "www.eccbaseballny.com",
+    "www.griffsmethod.com",
+    "www.proslotbos.com"
+  ]
+}

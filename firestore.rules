@@ -1,0 +1,299 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             (request.auth.token.role == 'ADMIN' || 
+              request.auth.token.role == 'OWNER' || 
+              request.auth.token.role == 'FACILITY_OWNER' ||
+              request.auth.token.role == 'PLATFORM_ADMIN' ||
+              request.auth.uid == 'lN7BZ7YQ9weHitcn8lwKihIx27C2');
+    }
+    
+    function belongsToOrganization() {
+      return isAuthenticated() && 
+             resource.data.organizationId == request.auth.token.organizationId;
+    }
+    
+    function hasSectorAccess(sector) {
+      return isAuthenticated() && 
+             (request.auth.token.sectors.hasAny([sector]) || 
+              request.auth.token.defaultSector == sector ||
+              isAdmin());
+    }
+
+    function isSportsStream(orgId) {
+      return orgId == 'ProSlotSportsStream';
+    }
+    
+    // ============= SPORTS SECTOR =============
+    match /athletes/{athleteId} {
+      allow read: if isAuthenticated() && 
+                     resource.data.sector == 'sports' &&
+                     hasSectorAccess('sports');
+      allow write: if isAdmin();
+    }
+    
+    match /trainers/{trainerId} {
+      allow read: if isAuthenticated() && hasSectorAccess('sports');
+      allow write: if isAdmin();
+    }
+    
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated() && hasSectorAccess('sports');
+      allow write: if isAdmin();
+    }
+    
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && hasSectorAccess('sports');
+      allow write: if isAdmin();
+    }
+    
+    match /teams/{teamId} {
+      allow read: if isAuthenticated() && hasSectorAccess('sports');
+      allow write: if isAdmin();
+    }
+    
+    match /class-types/{classTypeId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // ============= EDUCATION SECTOR =============
+    match /students/{studentId} {
+      allow read: if isAuthenticated() && 
+                     resource.data.sector == 'education' &&
+                     hasSectorAccess('education');
+      allow write: if isAdmin();
+    }
+    
+    match /studyMaterials/{materialId} {
+      allow read: if isAuthenticated() && hasSectorAccess('education');
+      allow write: if isAuthenticated() && hasSectorAccess('education');
+      allow delete: if isAuthenticated() && 
+                       (hasSectorAccess('education') || isAdmin());
+    }
+    
+    match /studyGuides/{guideId} {
+      allow read: if isAuthenticated() && hasSectorAccess('education');
+      allow write: if isAuthenticated() && hasSectorAccess('education');
+      allow delete: if isAuthenticated() && 
+                       (hasSectorAccess('education') || isAdmin());
+    }
+    
+    match /flashcardSets/{setId} {
+      allow read: if isAuthenticated() && hasSectorAccess('education');
+      allow write: if isAuthenticated() && hasSectorAccess('education');
+      allow delete: if isAuthenticated() && 
+                       (hasSectorAccess('education') || isAdmin());
+    }
+    
+    // ============= SHARED COLLECTIONS =============
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Organizations (multi-sector)
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+
+      // ============= ORG-SCOPED SUB-COLLECTIONS =============
+      
+      match /appointments/{appointmentId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /users/{userId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && 
+                        (request.auth.uid == userId || isAdmin());
+      }
+
+      match /athletes/{athleteId} {
+        allow read: if isAuthenticated() && hasSectorAccess('sports');
+        allow write: if isAdmin();
+      }
+
+      match /trainers/{trainerId} {
+        allow read: if isAuthenticated() && hasSectorAccess('sports');
+        allow write: if isAdmin();
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isAuthenticated() && (
+          resource.data.userId == request.auth.uid || 
+          resource.data.userId == request.auth.token.email ||
+          isAdmin()
+        );
+        allow write: if isAdmin();
+      }
+
+      match /adminNotifications/{notificationId} {
+        allow read: if isAdmin();
+        allow write: if isAdmin();
+      }
+
+      match /payments/{paymentId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /refunds/{refundId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /credits/{creditId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /bills/{billId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /bookings/{bookingId} {
+        allow read: if isAuthenticated() && hasSectorAccess('sports');
+        allow write: if isAdmin();
+      }
+
+      match /teams/{teamId} {
+        allow read: if isAuthenticated() && hasSectorAccess('sports');
+        allow write: if isAdmin();
+      }
+
+      match /memberships/{membershipId} {
+        allow read: if isAuthenticated() && (
+          resource.data.userId == request.auth.uid || 
+          resource.data.parentId == request.auth.uid ||
+          isAdmin()
+        );
+        allow write: if isAdmin();
+      }
+
+      match /families/{familyId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /familyInvites/{inviteId} {
+        allow read: if isAuthenticated() && (
+          resource.data.inviterId == request.auth.uid || 
+          resource.data.email == request.auth.token.email ||
+          isAdmin()
+        );
+        allow write: if isAuthenticated();
+      }
+
+      match /transactions/{transactionId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /payouts/{payoutId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /spaces/{spaceId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      match /studyMaterials/{materialId} {
+        allow read: if isAuthenticated() && hasSectorAccess('education');
+        allow write: if isAuthenticated() && hasSectorAccess('education');
+        allow delete: if isAuthenticated() && (hasSectorAccess('education') || isAdmin());
+      }
+
+      match /studyGuides/{guideId} {
+        allow read: if isAuthenticated() && hasSectorAccess('education');
+        allow write: if isAuthenticated() && hasSectorAccess('education');
+        allow delete: if isAuthenticated() && (hasSectorAccess('education') || isAdmin());
+      }
+
+      match /flashcardSets/{setId} {
+        allow read: if isAuthenticated() && hasSectorAccess('education');
+        allow write: if isAuthenticated() && hasSectorAccess('education');
+        allow delete: if isAuthenticated() && (hasSectorAccess('education') || isAdmin());
+      }
+
+      // ============= SPORTS STREAM =============
+      // Games
+      match /games/{gameId} {
+        allow read, write: if isSportsStream(orgId) || isAuthenticated();
+
+        // Phase 1: Live scoring state
+        match /scoring/{doc} {
+          allow read: if isSportsStream(orgId) || isAuthenticated();
+          allow write: if isSportsStream(orgId) || isAdmin();
+        }
+
+        // Phase 2: Pitch-by-pitch play log
+        match /plays/{playId} {
+          allow read: if isSportsStream(orgId) || isAuthenticated();
+          allow write: if isSportsStream(orgId) || isAdmin();
+        }
+
+        // Phase 2: Team rosters
+        match /roster/{side} {
+          allow read: if isSportsStream(orgId) || isAuthenticated();
+          allow write: if isSportsStream(orgId) || isAdmin();
+        }
+      }
+
+      // Clips
+      match /clips/{clipId} {
+        allow read, write: if isSportsStream(orgId) || isAuthenticated();
+      }
+    }
+    
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    match /memberships/{membershipId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.parentId == request.auth.uid ||
+        resource.data.familyId == request.auth.uid ||
+        isAdmin()
+      );
+      allow write: if isAdmin();
+    }
+
+    match /invites/{inviteId} {
+      allow read: if isAuthenticated() && (
+        resource.data.fromUserId == request.auth.uid || 
+        resource.data.email == request.auth.token.email ||
+        isAdmin()
+      );
+      allow write: if isAuthenticated();
+    }
+    
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.userId == request.auth.token.email
+      );
+      allow write: if isAdmin();
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

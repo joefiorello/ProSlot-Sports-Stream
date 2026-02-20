@@ -45,6 +45,18 @@ body {
     }
 }
 
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ── Video containers ── */
 .video-container {
     @apply relative bg-black rounded-xl overflow-hidden;
@@ -92,4 +104,15 @@ body {
 /* ── Stream player ── */
 .lk-room-container {
     background: transparent !important;
+}
+
+/* Force LiveKit video to fit within viewport instead of cropping */
+.lk-participant-tile video,
+.lk-participant-tile>video,
+.lk-video-track video,
+.lk-video-track>video,
+[data-lk-source="camera"] video,
+.lk-participant-media-video {
+    object-fit: contain !important;
+    background: #000;
 }

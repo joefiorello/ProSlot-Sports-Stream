@@ -1,4 +1,8 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Radio, Zap, Film, Users, Shield, Clock } from 'lucide-react';
 
 const features = [
@@ -47,6 +51,16 @@ const features = [
 ];
 
 export default function Home() {
+    const router = useRouter();
+    const [joinCode, setJoinCode] = useState('');
+
+    const handleJoin = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (joinCode.trim().length === 6) {
+            router.push(`/watch?code=${joinCode.trim().toUpperCase()}`);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#0a0f1a]">
             {/* ── Nav ── */}
@@ -99,19 +113,33 @@ export default function Home() {
                         ProSlot Stream lets youth sports organizations broadcast live games from multiple phone cameras simultaneously. Multi-angle, low-latency, no app required.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                         <Link
                             href="/dashboard"
                             className="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-sm uppercase tracking-widest rounded-xl transition-all hover:scale-105 active:scale-95"
                         >
-                            Start a Stream →
+                            Open Dashboard →
                         </Link>
-                        <Link
-                            href="/dashboard"
-                            className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm uppercase tracking-widest rounded-xl transition-all"
-                        >
-                            Watch a Game
-                        </Link>
+
+                        <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden focus-within:border-cyan-500 transition-colors">
+                            <form onSubmit={handleJoin} className="flex">
+                                <input
+                                    type="text"
+                                    placeholder="Enter 6-char Code"
+                                    value={joinCode}
+                                    onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                                    maxLength={6}
+                                    className="bg-transparent text-white px-4 py-4 w-44 font-mono font-bold placeholder-white/40 focus:outline-none uppercase"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={joinCode.length !== 6}
+                                    className="px-6 py-4 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white font-bold text-sm uppercase tracking-widest transition-colors"
+                                >
+                                    Watch
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 

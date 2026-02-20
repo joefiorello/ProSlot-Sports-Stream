@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import '@livekit/components-styles';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
     title: 'ProSlot Sports Stream',
@@ -17,8 +18,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="en">
             <body className="bg-[#0a0f1a] text-white antialiased">
-                {children}
+                <Providers>{children}</Providers>
             </body>
         </html>
     );
 }
+
