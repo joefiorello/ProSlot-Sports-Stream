@@ -146,13 +146,13 @@ export default function DashboardPage() {
                                         </span>
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Link
-                                                href={`/broadcast/${game.id}`}
+                                                href={`/broadcast?gameId=${game.id}`}
                                                 className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs font-bold rounded-lg transition-colors"
                                             >
                                                 Camera
                                             </Link>
                                             <Link
-                                                href={`/stream/${game.id}`}
+                                                href={`/watch?gameId=${game.id}`}
                                                 className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
                                             >
                                                 <ChevronRight className="w-4 h-4 text-white/50" />

@@ -1,18 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'export',
+    trailingSlash: true,
     reactStrictMode: true,
+    // Firebase Hosting requires unoptimized images for static export
     images: {
-        domains: ['firebasestorage.googleapis.com', 'storage.googleapis.com'],
-    },
-    async headers() {
-        return [
-            {
-                source: '/:path*',
-                headers: [
-                    { key: 'Access-Control-Allow-Origin', value: '*' },
-                ],
-            },
-        ];
+        unoptimized: true,
     },
 };
 
