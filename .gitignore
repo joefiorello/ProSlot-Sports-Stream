@@ -31,3 +31,13 @@ next-env.d.ts
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Firebase local auth/config exports — contain API keys and SCRYPT hash secrets
+auth_config.json
+auth_patch.json
+
+# GCP / Firebase service account keys
+*-service-account*.json
+*serviceAccountKey*.json
+serviceAccount*.json
+application_default_credentials.json
