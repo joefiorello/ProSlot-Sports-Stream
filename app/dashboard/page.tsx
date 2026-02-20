@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Radio, Plus, Users, Clock, ChevronRight, Video, Tv } from 'lucide-react';
 import { getGames, createGame, ORG_ID } from '@/lib/db';
-import { createStreamRoom } from '@/lib/livekit';
 import type { Game } from '@/types';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -26,6 +25,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [creating, setCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
     const [form, setForm] = useState({
         title: '',
         homeTeam: '',
@@ -41,19 +41,22 @@ export default function DashboardPage() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         setCreating(true);
+        setCreateError(null);
         try {
-            const gameId = await createGame({
+            // createGame writes to Firestore and generates a roomName internally.
+            // No server API call needed — LiveKit room is created lazily on first join.
+            await createGame({
                 ...form,
                 orgId: ORG_ID,
                 userId: 'admin', // replace with real auth user
             });
-            await createStreamRoom({ gameId, title: form.title, orgId: ORG_ID });
             const updated = await getGames(ORG_ID);
             setGames(updated);
             setShowCreate(false);
             setForm({ title: '', homeTeam: '', awayTeam: '', sport: 'Baseball', scheduledAt: new Date().toISOString().slice(0, 16) });
         } catch (err) {
-            console.error(err);
+            console.error('[createGame]', err);
+            setCreateError(err instanceof Error ? err.message : 'Failed to create game. Check your Firebase config.');
         } finally {
             setCreating(false);
         }
@@ -230,10 +233,15 @@ export default function DashboardPage() {
                                     />
                                 </div>
                             </div>
+                            {createError && (
+                                <div className="px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400 font-medium">
+                                    {createError}
+                                </div>
+                            )}
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => setShowCreate(false)}
+                                    onClick={() => { setShowCreate(false); setCreateError(null); }}
                                     className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-bold rounded-lg transition-colors"
                                 >
                                     Cancel
