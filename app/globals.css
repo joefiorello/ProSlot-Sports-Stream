@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --pitch: #0a0f1a;
+    --diamond: #111827;
+    --electric: #06b6d4;
+    --signal: #10b981;
+}
+
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+html,
+body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    background-color: var(--pitch);
+    color: #f8fafc;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Live indicator ── */
+.live-dot {
+    @apply w-2 h-2 rounded-full bg-red-500;
+    animation: livePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(0.85);
+    }
+}
+
+/* ── Video containers ── */
+.video-container {
+    @apply relative bg-black rounded-xl overflow-hidden;
+    aspect-ratio: 16 / 9;
+}
+
+.video-overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent;
+}
+
+/* ── Glass card ── */
+.glass-card {
+    @apply rounded-2xl border border-white/10;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(16px);
+}
+
+/* ── Angle chip ── */
+.angle-chip {
+    @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer transition-all;
+}
+
+.angle-chip.active {
+    @apply bg-cyan-500 text-black;
+}
+
+.angle-chip.inactive {
+    @apply bg-white/10 text-white/60 hover:bg-white/20;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+}
+
+/* ── Stream player ── */
+.lk-room-container {
+    background: transparent !important;
+}
